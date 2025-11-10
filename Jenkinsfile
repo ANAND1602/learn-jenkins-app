@@ -19,14 +19,15 @@ pipeline {
                     ls -la
                 '''
             }
-            stage('Test'){
-                steps {
-                    sh '''
-                       npm test
-                       ls -l index.html
-                      '''
+        }
+
+        stage('Test') {
+            steps {
+                sh '''
+                    npm test
+                    ls -l index.html
+                '''
             }
         }
     }
 }
-
