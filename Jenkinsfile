@@ -35,25 +35,23 @@ pipeline {
                 '''
             }
         }
-    
-    stage('E2E') {
-        agent {
-            docker {
-                image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+
+        stage('E2E') {
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                }
+            }
+            steps {
+                sh '''
+                    npm install serve wait-on
+                    node_modules/.bin/serve -s build &
+                    npx wait-on http://localhost:3000
+                    npx playwright test
+                '''
             }
         }
-        steps {
-            sh '''
-               npm install serve
-               node_modules/.bin/serve -s build &
-               sleep 10
-               npx playwright test
-            '''
-        }
-
     }
-
-}
 
     post {
         always {
