@@ -24,7 +24,7 @@ pipeline {
                     sh '''
                        npm test
                        ls -l index.html
-                   '''
+                      '''
             }
         }
     }
