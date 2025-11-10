@@ -19,6 +19,9 @@ pipeline {
                     ls -la
                 '''
             }
+            stage('Test'){
+                npm test
+            }
         }
     }
 }
