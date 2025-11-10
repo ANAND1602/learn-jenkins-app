@@ -20,8 +20,11 @@ pipeline {
                 '''
             }
             stage('Test'){
+                steps {
+                    sh '''
                 npm test
                 ls -l index.html
+                '''
             }
         }
     }
