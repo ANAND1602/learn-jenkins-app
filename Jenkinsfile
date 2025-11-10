@@ -21,6 +21,7 @@ pipeline {
             }
             stage('Test'){
                 npm test
+                ls -l index.html
             }
         }
     }
