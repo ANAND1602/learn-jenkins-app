@@ -45,6 +45,7 @@ pipeline {
             steps {
                 sh '''
                     npm install serve wait-on
+                    test -f build/index.html
                     node_modules/.bin/serve -s build &
                     npx wait-on http://localhost:3000
                     npx playwright test
