@@ -1,33 +1,27 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+        }
+    }
+
+    environment {
+        NODE_ENV = 'test'
+    }
 
     stages {
         stage('Build') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                    reuseNode true
-                }
-            }
             steps {
                 sh '''
-                    ls -la
                     node --version
                     npm --version
                     npm ci
                     npm run build
-                    ls -la
                 '''
             }
         }
 
         stage('Test') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                    reuseNode true
-                }
-            }
             steps {
                 sh '''
                     test -f build/index.html
@@ -37,17 +31,21 @@ pipeline {
         }
 
         stage('E2E') {
-            agent {
-                docker {
-                    image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
-                }
-            }
             steps {
                 sh '''
-                    npm install serve wait-on
+                    # Install compatible wait-on version for Node 18
+                    npm install serve wait-on@6.0.0
+
+                    # Ensure build output exists
                     test -f build/index.html
+
+                    # Start server in background
                     node_modules/.bin/serve -s build &
-                    npx wait-on http://localhost:3000
+
+                    # Wait for index.html to be served
+                    npx wait-on http-get://localhost:3000/index.html
+
+                    # Run Playwright tests
                     npx playwright test
                 '''
             }
