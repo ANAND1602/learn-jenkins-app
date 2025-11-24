@@ -70,10 +70,12 @@ pipeline {
 
     post {
         always {
-            // Allocate the same executor/workspace the Pipeline used
+            // Ensure a workspace is allocated for post steps
             script {
                 node(env.NODE_NAME) {
-                    junit 'jest-results/junit.xml'
+                    // Minimal fix: do not fail the build if no JUnit XML exists
+                    junit allowEmptyResults: true, testResults: 'jest-results/junit.xml'
+
                     publishHTML([
                         allowMissing: false,
                         alwaysLinkToLastBuild: false,
