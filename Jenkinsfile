@@ -46,8 +46,8 @@ pipeline {
                     # Wait for index.html to be served
                     npx wait-on http-get://localhost:3000/index.html
 
-                    # Run Playwright tests
-                    npx playwright test --reporter=html 
+                    # Run Playwright tests (HTML report)
+                    npx playwright test --reporter=html
                 '''
             }
         }
@@ -70,24 +70,17 @@ pipeline {
 
     post {
         always {
-            // Ensure a workspace is allocated for post steps
             script {
+                // Ensure a workspace/launcher exists for post steps
                 node(env.NODE_NAME) {
-                    // Minimal fix: do not fail the build if no JUnit XML exists
+                    // Do not fail the build if the JUnit XML isn't present
                     junit allowEmptyResults: true, testResults: 'jest-results/junit.xml'
 
-                    publishHTML([
-                        allowMissing: false,
-                        alwaysLinkToLastBuild: false,
-                        keepAll: false,
-                        reportDir: 'playwright-report',
-                        reportFiles: 'index.html',
-                        reportName: 'Playwright HTML Report',
-                        reportTitles: '',
-                        useWrapperFileDirectly: true
-                    ])
+                    // Archive the Playwright HTML report directory (does not require extra plugins)
+                    archiveArtifacts artifacts: 'playwright-report/**', allowEmptyArchive: true
                 }
             }
         }
     }
 }
+
