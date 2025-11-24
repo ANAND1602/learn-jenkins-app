@@ -41,7 +41,7 @@ pipeline {
                     test -f build/index.html
 
                     # Start server in background
-                    node_modules/.bin/serve -s build &amp;
+                    node_modules/.bin/serve -s build &amp;amp;
 
                     # Wait for index.html to be served
                     npx wait-on http-get://localhost:3000/index.html
@@ -70,8 +70,18 @@ pipeline {
 
     post {
         always {
-            junit 'jest-results/junit.xml'
-            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+            node {
+                junit 'jest-results/junit.xml'
+                publishHTML([
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: false,
+                    keepAll: false,
+                    reportDir: 'playwright-report',
+                    reportFiles: 'index.html',
+                    reportName: 'Playwright HTML Report',
+                    reportTitles: '',
+                    useWrapperFileDirectly: true
+                ])
+            }
         }
     }
-}
