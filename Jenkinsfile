@@ -70,21 +70,22 @@ pipeline {
 
     post {
         always {
-            // Allocate a workspace/launcher for post steps
-            node {
-                junit 'jest-results/junit.xml'
-                publishHTML([
-                    allowMissing: false,
-                    alwaysLinkToLastBuild: false,
-                    keepAll: false,
-                    reportDir: 'playwright-report',
-                    reportFiles: 'index.html',
-                    reportName: 'Playwright HTML Report',
-                    reportTitles: '',
-                    useWrapperFileDirectly: true
-                ])
+            // Allocate the same executor/workspace the Pipeline used
+            script {
+                node(env.NODE_NAME) {
+                    junit 'jest-results/junit.xml'
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: false,
+                        keepAll: false,
+                        reportDir: 'playwright-report',
+                        reportFiles: 'index.html',
+                        reportName: 'Playwright HTML Report',
+                        reportTitles: '',
+                        useWrapperFileDirectly: true
+                    ])
+                }
             }
         }
     }
 }
-
