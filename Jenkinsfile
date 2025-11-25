@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -34,13 +35,13 @@ pipeline {
 
                     steps {
                         sh '''
-                            #test -f build/index.html
                             npm test
                         '''
                     }
                     post {
                         always {
-                            junit 'jest-results/junit.xml'
+                            // Avoid failure if XML is missing
+                            junit allowEmptyResults: true, testResults: 'jest-results/junit.xml'
                         }
                     }
                 }
@@ -58,13 +59,14 @@ pipeline {
                             npm install serve
                             node_modules/.bin/serve -s build &
                             sleep 10
-                            npx playwright test  --reporter=html
+                            npx playwright test --reporter=html
                         '''
                     }
 
                     post {
                         always {
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+                            // Use archiveArtifacts instead of publishHTML (plugin-free)
+                            archiveArtifacts artifacts: 'playwright-report/**', allowEmptyArchive: true
                         }
                     }
                 }
