@@ -1,54 +1,73 @@
-
 pipeline {
-    agent {
-        docker {
-            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
-        }
-    }
-
-    environment {
-        NODE_ENV = 'test'
-    }
+    agent any
 
     stages {
+
         stage('Build') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    reuseNode true
+                }
+            }
             steps {
                 sh '''
+                    ls -la
                     node --version
                     npm --version
                     npm ci
                     npm run build
+                    ls -la
                 '''
             }
         }
 
-        stage('Test') {
-            steps {
-                sh '''
-                    test -f build/index.html
-                    npm test
-                '''
-            }
-        }
+        stage('Tests') {
+            parallel {
+                stage('Unit tests') {
+                    agent {
+                        docker {
+                            image 'node:18-alpine'
+                            reuseNode true
+                        }
+                    }
 
-        stage('E2E') {
-            steps {
-                sh '''
-                    # Install compatible wait-on version for Node 18
-                    npm install serve wait-on@6.0.0
+                    steps {
+                        sh '''
+                            #test -f build/index.html
+                            npm test
+                        '''
+                    }
+                    post {
+                        always {
+                            junit 'jest-results/junit.xml'
+                        }
+                    }
+                }
 
-                    # Ensure build output exists
-                    test -f build/index.html
+                stage('E2E') {
+                    agent {
+                        docker {
+                            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                            reuseNode true
+                        }
+                    }
 
-                    # Start server in background
-                    node_modules/.bin/serve -s build &amp;amp;
+                    steps {
+                        sh '''
+                            npm install serve
+                            node_modules/.bin/serve -s build &
+                            sleep 10
+                            npx playwright test  --reporter=html
+                        '''
+                    }
 
-                    # Wait for index.html to be served
-                    npx wait-on http-get://localhost:3000/index.html
-
-                    # Run Playwright tests (HTML report)
-                    npx playwright test --reporter=html
-                '''
+                    post {
+                        always {
+                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+                        }
+                    }
+                }
             }
         }
 
@@ -67,20 +86,4 @@ pipeline {
             }
         }
     }
-
-    post {
-        always {
-            script {
-                // Ensure a workspace/launcher exists for post steps
-                node(env.NODE_NAME) {
-                    // Do not fail the build if the JUnit XML isn't present
-                    junit allowEmptyResults: true, testResults: 'jest-results/junit.xml'
-
-                    // Archive the Playwright HTML report directory (does not require extra plugins)
-                    archiveArtifacts artifacts: 'playwright-report/**', allowEmptyArchive: true
-                }
-            }
-        }
-    }
 }
-
